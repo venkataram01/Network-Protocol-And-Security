@@ -1,0 +1,114 @@
+def rail_fence_encrypt(plaintext, rails):
+    fence = [''] * rails
+    rail = 0
+    direction = 1  # 1 means going down, -1 means going up
+
+    for char in plaintext:
+        fence[rail] += char
+        rail += direction
+        if rail == rails - 1 or rail == 0:
+            direction *= -1
+
+    return ''.join(fence)
+
+
+def rail_fence_decrypt(ciphertext, rails):
+    rail_lengths = [0] * rails
+    rail = 0
+    direction = 1
+
+    # Calculate the length of each rail
+    for char in ciphertext:
+        rail_lengths[rail] += 1
+        rail += direction
+        if rail == rails - 1 or rail == 0:
+            direction *= -1
+
+    # Create the fence
+    fence = [''] * rails
+    index = 0
+
+    # Fill the fence with the ciphertext
+    for i in range(rails):
+        fence[i] = ciphertext[index:index + rail_lengths[i]]
+        index += rail_lengths[i]
+
+    # Read off the characters in zigzag manner
+    result = []
+    rail = 0
+    direction = 1
+    for _ in range(len(ciphertext)):
+        result.append(fence[rail][0])  # Take the first char from the current rail
+        fence[rail] = fence[rail][1:]  # Remove the char taken
+        rail += direction
+        if rail == rails - 1 or rail == 0:
+            direction *= -1
+
+    return ''.join(result)
+
+
+def columnar_encrypt(plaintext, keyword):
+    # Create a grid based on the keyword length
+    num_cols = len(keyword)
+    num_rows = len(plaintext) // num_cols + (1 if len(plaintext) % num_cols else 0)
+    grid = [''] * num_cols
+
+    # Fill the grid
+    for i, char in enumerate(plaintext):
+        grid[i % num_cols] += char
+
+    # Sort the keyword and the indices
+    sorted_indices = sorted(range(len(keyword)), key=lambda i: keyword[i])
+
+    # Read off the columns in the order of the sorted keyword
+    ciphertext = ''.join(grid[i] for i in sorted_indices)
+    return ciphertext
+
+
+def columnar_decrypt(ciphertext, keyword):
+    # Create a grid based on the keyword length
+    num_cols = len(keyword)
+    num_rows = len(ciphertext) // num_cols
+
+    # Calculate the lengths of the columns
+    column_lengths = [num_rows] * num_cols
+    for i in range(len(ciphertext) % num_cols):
+        column_lengths[i] += 1
+
+    # Create an empty grid
+    grid = [''] * num_cols
+    index = 0
+
+    # Fill the grid according to the lengths
+    sorted_indices = sorted(range(len(keyword)), key=lambda i: keyword[i])
+    for i in sorted_indices:
+        grid[i] = ciphertext[index:index + column_lengths[i]]
+        index += column_lengths[i]
+
+    # Read off the characters row-wise
+    result = []
+    for i in range(num_rows):
+        for j in range(num_cols):
+            if i < len(grid[j]):
+                result.append(grid[j][i])
+
+    return ''.join(result)
+
+
+# Example usage
+if __name__ == "__main__":
+    # Rail Fence
+    plaintext_rf = "HELLO WORLD"
+    rails = 3
+    encrypted_rf = rail_fence_encrypt(plaintext_rf, rails)
+    decrypted_rf = rail_fence_decrypt(encrypted_rf, rails)
+    print(f"Rail Fence Encryption: {encrypted_rf}")
+    print(f"Rail Fence Decryption: {decrypted_rf}")
+
+    # Columnar Transposition
+    plaintext_ct = "HELLO WORLD"
+    keyword = "KEY"
+    encrypted_ct = columnar_encrypt(plaintext_ct, keyword)
+    decrypted_ct = columnar_decrypt(encrypted_ct, keyword)
+    print(f"Columnar Transposition Encryption: {encrypted_ct}")
+    print(f"Columnar Transposition Decryption: {decrypted_ct}")
